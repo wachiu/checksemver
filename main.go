@@ -11,16 +11,24 @@ import (
 
 // LatestVersions returns a sorted slice with the highest version as its first element and the highest version of the smaller minor versions in a descending order
 func LatestVersions(releases []*semver.Version, minVersion *semver.Version) []*semver.Version {
-	versionSlice := make([]*semver.Version, len(releases))
-	copy(versionSlice, releases)
+	versionSlice := filterVersions(releases, minVersion)
 	sort.Slice(versionSlice, func(i, j int) bool {
-		result := versionSlice[i].Compare(*versionSlice[j])
-		if result == 1 {
+		if versionSlice[i].Compare(*versionSlice[j]) == 1 {
 			return true
 		}
 		return false
 	})
 	return versionSlice
+}
+
+func filterVersions(input []*semver.Version, minVersion *semver.Version) []*semver.Version {
+	var ret []*semver.Version
+	for _, v := range input {
+		if !v.LessThan(*minVersion) {
+			ret = append(ret, v)
+		}
+	}
+	return ret
 }
 
 func main() {

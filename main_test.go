@@ -59,6 +59,7 @@ func TestLatestVersions(t *testing.T) {
 		}
 	}
 
+	//TODO: make them runners
 	for _, testValues := range testCases {
 		test(testValues.versionSlice, testValues.expectedResult, testValues.minVersion)
 	}
