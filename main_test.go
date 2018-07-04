@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -52,15 +53,16 @@ func TestLatestVersions(t *testing.T) {
 		// TODO:Implement more relevant test cases
 	}
 
-	test := func(versionData []string, expectedResult []string, minVersion *semver.Version) {
+	test := func(versionData []string, expectedResult []string, minVersion *semver.Version, tt *testing.T) {
 		stringSlice := versionToStringSlice(LatestVersions(stringToVersionSlice(versionData), minVersion))
 		if !reflect.DeepEqual(stringSlice, expectedResult) {
-			t.Errorf("Received %s, expected %s", stringSlice, expectedResult)
+			tt.Errorf("Received %s, expected %s", stringSlice, expectedResult)
 		}
 	}
 
-	//TODO: make them runners
-	for _, testValues := range testCases {
-		test(testValues.versionSlice, testValues.expectedResult, testValues.minVersion)
+	for i, testValues := range testCases {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			test(testValues.versionSlice, testValues.expectedResult, testValues.minVersion, t)
+		})
 	}
 }
