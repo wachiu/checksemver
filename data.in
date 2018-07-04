@@ -4,3 +4,5 @@ prometheus/prometheus,2.2.0
 gin-gonic/gin,0.0.1
 gorilla/mux,0.0.1
 go-playground/validator,5.0.1
+google/go-github,9.0.1
+coreos/go-semver,0.0.0
