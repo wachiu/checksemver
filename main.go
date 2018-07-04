@@ -12,6 +12,7 @@ import (
 // LatestVersions returns a sorted slice with the highest version as its first element and the highest version of the smaller minor versions in a descending order
 func LatestVersions(releases []*semver.Version, minVersion *semver.Version) []*semver.Version {
 	versionSlice := filterVersions(releases, minVersion)
+	versionSlice = onlyMaxPatch(versionSlice)
 	sort.Slice(versionSlice, func(i, j int) bool {
 		if versionSlice[i].Compare(*versionSlice[j]) == 1 {
 			return true
@@ -21,12 +22,34 @@ func LatestVersions(releases []*semver.Version, minVersion *semver.Version) []*s
 	return versionSlice
 }
 
+// filterVersions remove versions which are less than minVersion
 func filterVersions(input []*semver.Version, minVersion *semver.Version) []*semver.Version {
 	var ret []*semver.Version
 	for _, v := range input {
 		if !v.LessThan(*minVersion) {
 			ret = append(ret, v)
 		}
+	}
+	return ret
+}
+
+// onlyMaxPatch keep only versions with the max patch
+func onlyMaxPatch(input []*semver.Version) []*semver.Version {
+	maxVerMap := make(map[string]*semver.Version)
+	for _, v := range input {
+		key := fmt.Sprintf("%d.%d", v.Major, v.Minor)
+		curMax, ok := maxVerMap[key]
+		if !ok {
+			maxVerMap[key] = v
+			continue
+		}
+		if curMax.LessThan(*v) {
+			maxVerMap[key] = v
+		}
+	}
+	var ret []*semver.Version
+	for _, v := range maxVerMap {
+		ret = append(ret, v)
 	}
 	return ret
 }
