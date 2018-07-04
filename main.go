@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"sort"
+	"strings"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/google/go-github/github"
@@ -55,24 +60,55 @@ func onlyMaxPatch(input []*semver.Version) []*semver.Version {
 }
 
 func main() {
-	// Github
-	client := github.NewClient(nil)
-	ctx := context.Background()
-	opt := &github.ListOptions{PerPage: 10}
-	releases, _, err := client.Repositories.ListReleases(ctx, "kubernetes", "kubernetes", opt)
-	if err != nil {
-		panic(err) // TODO:is this really a good way?
+	args := os.Args
+	if len(args) < 2 {
+		log.Fatal("missing file path in first argument")
 	}
-	minVersion := semver.New("1.8.0")
-	allReleases := make([]*semver.Version, len(releases))
-	for i, release := range releases {
-		versionString := *release.TagName
-		if versionString[0] == 'v' {
-			versionString = versionString[1:]
-		}
-		allReleases[i] = semver.New(versionString)
-	}
-	versionSlice := LatestVersions(allReleases, minVersion)
 
-	fmt.Printf("latest versions of kubernetes/kubernetes: %s", versionSlice)
+	filepath := args[1]
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("fail to open input file, err: %+v", err)
+	}
+	defer file.Close()
+
+	r := csv.NewReader(file)
+	var passHeader bool
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("fail to read input file, err: %+v", err)
+		}
+		if !passHeader {
+			passHeader = true
+			continue
+		}
+
+		// Github
+		client := github.NewClient(nil)
+		ctx := context.Background()
+		opt := &github.ListOptions{PerPage: 10}
+		repoInfo := strings.SplitN(record[0], "/", 2)
+		releases, _, err := client.Repositories.ListReleases(ctx, repoInfo[0], repoInfo[1], opt)
+		if err != nil {
+			log.Fatalf("fail to list releases from GitHub API, err: %+v", err)
+		}
+		minVersion := semver.New(record[1])
+		allReleases := make([]*semver.Version, len(releases))
+		for i, release := range releases {
+			versionString := *release.TagName
+			if versionString[0] == 'v' {
+				versionString = versionString[1:]
+			}
+			allReleases[i] = semver.New(versionString)
+		}
+		versionSlice := LatestVersions(allReleases, minVersion)
+
+		fmt.Printf("latest versions of %s: %s\n", record[0], versionSlice)
+	}
+
 }
