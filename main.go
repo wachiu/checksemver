@@ -98,13 +98,18 @@ func main() {
 			log.Fatalf("fail to list releases from GitHub API, err: %+v", err)
 		}
 		minVersion := semver.New(record[1])
-		allReleases := make([]*semver.Version, len(releases))
-		for i, release := range releases {
+		var allReleases []*semver.Version
+		for _, release := range releases {
 			versionString := *release.TagName
 			if versionString[0] == 'v' {
 				versionString = versionString[1:]
 			}
-			allReleases[i] = semver.New(versionString)
+			v, err := semver.NewVersion(versionString)
+			if err != nil {
+				log.Printf("Invalid version string, version string: %s, err: %+v", versionString, err)
+				continue
+			}
+			allReleases = append(allReleases, v)
 		}
 		versionSlice := LatestVersions(allReleases, minVersion)
 
