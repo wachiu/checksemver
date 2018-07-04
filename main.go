@@ -93,13 +93,21 @@ func main() {
 		ctx := context.Background()
 		opt := &github.ListOptions{PerPage: 10}
 		repoInfo := strings.SplitN(record[0], "/", 2)
-		releases, _, err := client.Repositories.ListReleases(ctx, repoInfo[0], repoInfo[1], opt)
-		if err != nil {
-			log.Fatalf("fail to list releases from GitHub API, err: %+v", err)
+		var allRepoReleases []*github.RepositoryRelease
+		for {
+			releases, resp, err := client.Repositories.ListReleases(ctx, repoInfo[0], repoInfo[1], opt)
+			if err != nil {
+				log.Fatalf("fail to list releases from GitHub API, err: %+v", err)
+			}
+			allRepoReleases = append(allRepoReleases, releases...)
+			if resp.NextPage == 0 {
+				break
+			}
+			opt.Page = resp.NextPage
 		}
 		minVersion := semver.New(record[1])
 		var allReleases []*semver.Version
-		for _, release := range releases {
+		for _, release := range allRepoReleases {
 			versionString := *release.TagName
 			if versionString[0] == 'v' {
 				versionString = versionString[1:]
