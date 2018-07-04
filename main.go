@@ -91,7 +91,7 @@ func main() {
 		// Github
 		client := github.NewClient(nil)
 		ctx := context.Background()
-		opt := &github.ListOptions{PerPage: 10}
+		opt := &github.ListOptions{PerPage: 100}
 		repoInfo := strings.SplitN(record[0], "/", 2)
 		var allRepoReleases []*github.RepositoryRelease
 		for {
