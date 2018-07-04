@@ -106,7 +106,7 @@ func main() {
 			}
 			v, err := semver.NewVersion(versionString)
 			if err != nil {
-				log.Printf("Invalid version string, version string: %s, err: %+v", versionString, err)
+				log.Printf("Invalid version string, repo: %s, version string: %s, err: %+v", record[0], versionString, err)
 				continue
 			}
 			allReleases = append(allReleases, v)
